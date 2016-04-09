@@ -10,6 +10,7 @@ package main
 import (
     "flag"
     "log"
+    "os"
     "io/ioutil"
     "fmt"
     "keycity"
@@ -98,12 +99,19 @@ func main() {
         "Save descriptors to files 'onion.replica.desc' in the working directory")
     var distinct_descs = flag.Bool("distinct-descs", false,
         "Force distinct descriptors mode")
-    var control = flag.String("control-addr", "9051",
+    var control = flag.String("control-addr", "tcp4://127.0.0.1:9051",
         "Set Tor control address to be used")
     var control_passwd = flag.String("control-passwd", "",
         "Set Tor control auth password")
     var replica_mask = flag.String("replica-mask","111111",
         "Select replicas to publish descriptors")
+    flag.Usage = func() {
+        fmt.Fprintf(os.Stderr, "Usage of %s:\n", os.Args[0])
+        fmt.Fprintf(os.Stderr, "%s [-flags] frontonion backonion1 [backonion2 [...]]\n",
+                    os.Args[0])
+        fmt.Fprintf(os.Stderr, "Available flags:\n")
+        flag.PrintDefaults()
+    }
     flag.Parse()
     debug := *debug_flag
     var tail = flag.Args()

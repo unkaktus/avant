@@ -5,7 +5,7 @@
 // commons "cc0" public domain dedication. See LICENSE or
 // <http://creativecommons.org/publicdomain/zero/1.0/> for full details.
 
-package main
+package avant
 
 import (
     "flag"
@@ -13,8 +13,6 @@ import (
     "os"
     "io/ioutil"
     "fmt"
-    "keycity"
-    "crypto/rsa"
     "onionutil"
     "onionutil/intropoint"
     "onionutil/oniondesc"
@@ -25,19 +23,6 @@ import (
 
 const MAX_REPLICA_NUMBER = 6
 const MAX_INTROPOINT_NUMBER = 10
-
-
-// A closure for passing signing funciton
-func signWith(onion string) (func(digest []byte) ([]byte, error))  {
-    return func(digest []byte) ([]byte, error) {
-        return keycity.SignPlease(onion, digest)
-    }
-}
-
-// A closure for passing public key getting function
-func getPubKeyFor(onion string) (pubkey *rsa.PublicKey, err error) {
-    return keycity.PubkeyPlease(onion)
-}
 
 func shuffleIntroPoints(src []intropoint.IntroductionPoint) (
                         dst []intropoint.IntroductionPoint) {

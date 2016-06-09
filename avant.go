@@ -84,7 +84,7 @@ func main() {
         "Save descriptors to files 'onion.replica.desc' in the working directory")
     var distinct_descs = flag.Bool("distinct-descs", false,
         "Force distinct descriptors mode")
-    var control = flag.String("control-addr", "tcp4://127.0.0.1:9051",
+    var control = flag.String("control-addr", "tcp://127.0.0.1:9051",
         "Set Tor control address to be used")
     var control_passwd = flag.String("control-passwd", "",
         "Set Tor control auth password")

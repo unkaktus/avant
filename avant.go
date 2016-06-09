@@ -17,8 +17,8 @@ import (
     "onionutil/intropoint"
     "onionutil/oniondesc"
     badrand "math/rand"
-    "github.com/yawning/bulb"
-    bulb_utils "github.com/yawning/bulb/utils"
+    "bulb"
+    bulb_utils "bulb/utils"
 )
 
 const MAX_REPLICA_NUMBER = 6

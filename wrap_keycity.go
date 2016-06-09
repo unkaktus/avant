@@ -1,4 +1,4 @@
-package avant
+package main
 
 import (
     "crypto/rsa"

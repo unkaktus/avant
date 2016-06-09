@@ -5,7 +5,7 @@
 // commons "cc0" public domain dedication. See LICENSE or
 // <http://creativecommons.org/publicdomain/zero/1.0/> for full details.
 
-package avant
+package main
 
 import (
     "flag"

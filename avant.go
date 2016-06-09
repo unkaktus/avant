@@ -126,7 +126,7 @@ func main() {
     // Parse control string
     control_net, control_addr, err := bulb_utils.ParseControlPortString(*control)
     if err != nil {
-        log.Fatalf("Failed to parse Tor control address string: %v")
+        log.Fatalf("Failed to parse Tor control address string: %v", err)
     }
     // Connect to a running tor instance.
     c, err := bulb.Dial(control_net, control_addr)

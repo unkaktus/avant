@@ -13,9 +13,7 @@ import (
     "os"
     "io/ioutil"
     "fmt"
-    "onionutil"
-    "onionutil/intropoint"
-    "onionutil/oniondesc"
+    "github.com/nogoegst/onionutil"
     badrand "math/rand"
     "bulb"
     bulb_utils "bulb/utils"
@@ -24,9 +22,9 @@ import (
 const MAX_REPLICA_NUMBER = 6
 const MAX_INTROPOINT_NUMBER = 10
 
-func shuffleIntroPoints(src []intropoint.IntroductionPoint) (
-                        dst []intropoint.IntroductionPoint) {
-    dst = make([]intropoint.IntroductionPoint, len(src))
+func shuffleIntroPoints(src []onionutil.IntroductionPoint) (
+                        dst []onionutil.IntroductionPoint) {
+    dst = make([]onionutil.IntroductionPoint, len(src))
     perm := badrand.Perm(len(src))
     for index,value := range perm {
         dst[value] = src[index]
@@ -54,9 +52,9 @@ func parseReplicaMask(mask string)(bool_mask [MAX_REPLICA_NUMBER]bool, err error
  * sets of IPs per replica (ipForReplica) with these IPs. If distinct_descs
  * option is true it does use layover anyway.
  */
-func pickIntroPoints(all_ips []intropoint.IntroductionPoint, distinct_descs bool) (
-                     ipForReplica [][]intropoint.IntroductionPoint) {
-    ipForReplica = make([][]intropoint.IntroductionPoint,
+func pickIntroPoints(all_ips []onionutil.IntroductionPoint, distinct_descs bool) (
+                     ipForReplica [][]onionutil.IntroductionPoint) {
+    ipForReplica = make([][]onionutil.IntroductionPoint,
                              MAX_REPLICA_NUMBER)
     all_ips = shuffleIntroPoints(all_ips)
     if (len(all_ips) <= MAX_INTROPOINT_NUMBER && distinct_descs == false) {
@@ -170,17 +168,17 @@ func main() {
 		log.Fatalf("SETEVENTS HS_DESC_CONTENT failed: %v", err)
 	}
 
-    var descriptors []oniondesc.OnionDescriptor
+    var descriptors []onionutil.OnionDescriptor
     // XXX: if some onion is broken we're stuck. timeout?
 
     // Revieve descriptors and parse them
     for len(onions) > 0 {
-		ev, err := c.NextEvent()
-		if err != nil {
-			log.Fatalf("NextEvent() failed: %v", err)
-		}
+	ev, err := c.NextEvent()
+	if err != nil {
+		log.Fatalf("NextEvent() failed: %v", err)
+	}
         desc_content_str := ev.Data[1]
-        descs, _  := oniondesc.ParseOnionDescriptors(desc_content_str)
+        descs, _  := onionutil.ParseOnionDescriptors(desc_content_str)
         if len(descs) == 0  {
             log.Printf("There are no descriptors in this document. Skipping.")
             if (debug) {
@@ -213,7 +211,7 @@ func main() {
     }
 
     // Gather all the IPs
-    all_ips := make([]intropoint.IntroductionPoint,
+    all_ips := make([]onionutil.IntroductionPoint,
                     0, len(onions)*MAX_INTROPOINT_NUMBER)
     for _, descriptor := range descriptors {
         all_ips = append(all_ips, descriptor.IntroductionPoints...)
@@ -228,9 +226,9 @@ func main() {
     log.Printf("Using the following IP distribution: %v", lens)
 
     for replica, do_publish := range replicas {
-        desc := oniondesc.ComposeDescriptor(perm_pk, picked_ips[replica], replica)
-        desc_body := oniondesc.MakeDescriptorBody(desc)
-        signed_desc := oniondesc.SignDescriptor(desc_body, signWith(front_onion))
+        desc := onionutil.ComposeDescriptor(perm_pk, picked_ips[replica], replica)
+        desc_body := onionutil.MakeDescriptorBody(desc)
+        signed_desc := onionutil.SignDescriptor(desc_body, signWith(front_onion))
 
         if (*save_to_files) {
             ioutil.WriteFile(fmt.Sprintf("%v.%v.desc", front_onion, replica),

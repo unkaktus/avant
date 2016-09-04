@@ -117,7 +117,7 @@ func main() {
         log.Fatalf("Cannot get front onion pubkey: %v", err)
     }
     // Check if we've got the right key
-    permid_from_pk, _ := onionutil.CalcPermanentId(perm_pk)
+    permid_from_pk, _ := onionutil.CalcPermanentID(perm_pk)
     if onionutil.Base32Encode(permid_from_pk) != front_onion {
         log.Fatalf("We've got wrong public key for the front onion")
     }
@@ -177,8 +177,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("NextEvent() failed: %v", err)
 	}
-        desc_content_str := ev.Data[1]
-        descs, _  := onionutil.ParseOnionDescriptors(desc_content_str)
+        descContent := []byte(ev.Data[1])
+        descs, _  := onionutil.ParseOnionDescriptors(descContent)
         if len(descs) == 0  {
             log.Printf("There are no descriptors in this document. Skipping.")
             if (debug) {
@@ -187,12 +187,12 @@ func main() {
             continue
         }
         for _, desc := range descs {
-            perm_id, err := onionutil.CalcPermanentId(desc.PermanentKey)
+            permID, err := onionutil.CalcPermanentID(desc.PermanentKey)
             if err != nil {
                 log.Printf("Error in calculating permanent id: %v", err)
                 continue
             }
-            onion_curr := onionutil.Base32Encode(perm_id)
+            onion_curr := onionutil.Base32Encode(permID)
             /* Is this onion is among the requested by us? */
             for i, onion := range onions {
                 if onion_curr == onion {
@@ -226,17 +226,16 @@ func main() {
     log.Printf("Using the following IP distribution: %v", lens)
 
     for replica, do_publish := range replicas {
-        desc := onionutil.ComposeDescriptor(perm_pk, picked_ips[replica], replica)
-        desc_body := onionutil.MakeDescriptorBody(desc)
-        signed_desc := onionutil.SignDescriptor(desc_body, signWith(front_onion))
+        desc := onionutil.NewOnionDescriptor(perm_pk, picked_ips[replica], replica)
+        signedDesc := desc.Sign(signWith(front_onion))
 
         if (*save_to_files) {
             ioutil.WriteFile(fmt.Sprintf("%v.%v.desc", front_onion, replica),
-                             []byte(signed_desc), 0600)
+                             signedDesc, 0600)
         }
         if do_publish {
             log.Printf("Publishing descriptor under replica #%v", replica)
-            resp, _ = c.Request("+HSPOST\n%s.", signed_desc)
+            resp, _ = c.Request("+HSPOST\n%s.", signedDesc)
             if debug {
                 log.Printf("HSPOST response: %v", resp)
             }

@@ -8,8 +8,8 @@
 package main
 
 import (
-	"bulb"
-	bulb_utils "bulb/utils"
+	"github.com/nogoegst/bulb"
+	bulb_utils "github.com/nogoegst/bulb/utils"
 	"flag"
 	"fmt"
 	"github.com/nogoegst/onionutil"

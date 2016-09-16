@@ -2,7 +2,7 @@ package main
 
 import (
     "crypto/rsa"
-    "keycity"
+    "github.com/nogoegst/keycity"
 )
 
 // A closure for passing signing funciton

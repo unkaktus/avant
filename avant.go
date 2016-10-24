@@ -8,15 +8,16 @@
 package main
 
 import (
-	"github.com/nogoegst/bulb"
-	bulb_utils "github.com/nogoegst/bulb/utils"
 	"flag"
 	"fmt"
-	"github.com/nogoegst/onionutil"
 	"io/ioutil"
 	"log"
 	badrand "math/rand"
 	"os"
+
+	"github.com/nogoegst/bulb"
+	bulbUtils "github.com/nogoegst/bulb/utils"
+	"github.com/nogoegst/onionutil"
 )
 
 const MAX_REPLICA_NUMBER = 6
@@ -119,7 +120,7 @@ func main() {
 		log.Fatalf("We've got wrong public key for the front onion")
 	}
 	// Parse control string
-	control_net, control_addr, err := bulb_utils.ParseControlPortString(*control)
+	control_net, control_addr, err := bulbUtils.ParseControlPortString(*control)
 	if err != nil {
 		log.Fatalf("Failed to parse Tor control address string: %v", err)
 	}

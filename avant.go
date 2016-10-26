@@ -16,7 +16,6 @@ import (
 	"os"
 
 	"github.com/nogoegst/bulb"
-	bulbUtils "github.com/nogoegst/bulb/utils"
 	"github.com/nogoegst/onionutil"
 )
 
@@ -80,7 +79,7 @@ func main() {
 		"Save descriptors to files 'onion.replica.desc' in the working directory")
 	var distinct_descs = flag.Bool("distinct-descs", false,
 		"Force distinct descriptors mode")
-	var control = flag.String("control-addr", "tcp://127.0.0.1:9051",
+	var control = flag.String("control-addr", "default://",
 		"Set Tor control address to be used")
 	var control_passwd = flag.String("control-passwd", "",
 		"Set Tor control auth password")
@@ -119,13 +118,8 @@ func main() {
 	if onionutil.Base32Encode(permid_from_pk) != front_onion {
 		log.Fatalf("We've got wrong public key for the front onion")
 	}
-	// Parse control string
-	control_net, control_addr, err := bulbUtils.ParseControlPortString(*control)
-	if err != nil {
-		log.Fatalf("Failed to parse Tor control address string: %v", err)
-	}
 	// Connect to a running tor instance.
-	c, err := bulb.Dial(control_net, control_addr)
+	c, err := bulb.DialURL(*control)
 	if err != nil {
 		log.Fatalf("Failed to connect to control socket: %v", err)
 	}

@@ -31,19 +31,21 @@ func shuffleIntroPoints(src, dst []onionutil.IntroductionPoint) {
 }
 
 /* 6-bit mask for 'enable-publish' bit for each replica */
-func parseReplicaMask(mask string) (bool_mask [MaxDescriptors]bool, err error) {
+func parseReplicaMask(mask string) (boolMask [MaxDescriptors]bool, err error) {
 	if len(mask) != MaxDescriptors {
-		return bool_mask, fmt.Errorf("Wrong mask length - should be %d",
-			MaxDescriptors)
+		return boolMask, fmt.Errorf("Wrong mask length - should be %d", MaxDescriptors)
 	}
 	for i, v := range mask {
-		if v != '0' {
-			bool_mask[i] = true
-		} else {
-			bool_mask[i] = false
+		switch v {
+		case '0':
+			boolMask[i] = false
+		case '1':
+			boolMask[i] = true
+		default:
+			return boolMask, fmt.Errorf("Invalid chars in mask string")
 		}
 	}
-	return bool_mask, nil
+	return
 }
 
 /* pickIntroPoints picks introduction points from all_ips and populates

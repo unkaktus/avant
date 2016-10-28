@@ -19,8 +19,9 @@ import (
 	"github.com/nogoegst/onionutil"
 )
 
-const MAX_REPLICA_NUMBER = 6
-const MAX_INTROPOINT_NUMBER = 10
+const MaxDescriptors = 6
+const MaxIntropointsInDesc = 10
+const MaxIntropoints = MaxIntropointsInDesc*MaxDescriptors
 
 func shuffleIntroPoints(src, dst []onionutil.IntroductionPoint) {
 	perm := badrand.Perm(len(src))
@@ -30,10 +31,10 @@ func shuffleIntroPoints(src, dst []onionutil.IntroductionPoint) {
 }
 
 /* 6-bit mask for 'enable-publish' bit for each replica */
-func parseReplicaMask(mask string) (bool_mask [MAX_REPLICA_NUMBER]bool, err error) {
-	if len(mask) != MAX_REPLICA_NUMBER {
+func parseReplicaMask(mask string) (bool_mask [MaxDescriptors]bool, err error) {
+	if len(mask) != MaxDescriptors {
 		return bool_mask, fmt.Errorf("Wrong mask length - should be %d",
-			MAX_REPLICA_NUMBER)
+			MaxDescriptors)
 	}
 	for i, v := range mask {
 		if v != '0' {
@@ -52,20 +53,20 @@ func parseReplicaMask(mask string) (bool_mask [MAX_REPLICA_NUMBER]bool, err erro
 func pickIntroPoints(all_ips []onionutil.IntroductionPoint, distinct_descs bool) (
 	ipForReplica [][]onionutil.IntroductionPoint) {
 	ipForReplica = make([][]onionutil.IntroductionPoint,
-		MAX_REPLICA_NUMBER)
+		MaxDescriptors)
 	shuffleIntroPoints(all_ips, all_ips)
-	if len(all_ips) <= MAX_INTROPOINT_NUMBER && distinct_descs == false {
+	if len(all_ips) <= MaxIntropointsInDesc && distinct_descs == false {
 		for i, _ := range ipForReplica {
 			ipForReplica[i] = all_ips
 		}
 	} else { /* Distinct descriptors mode */
 		/* Truncate if it's too many IPs */
-		if len(all_ips) > MAX_REPLICA_NUMBER*MAX_INTROPOINT_NUMBER {
-			all_ips = all_ips[:MAX_REPLICA_NUMBER*MAX_INTROPOINT_NUMBER]
+		if len(all_ips) > MaxIntropoints {
+			all_ips = all_ips[:MaxIntropoints]
 		}
 		/* Distribute IPs using layover method */
 		for i, ip := range all_ips {
-			index := i % MAX_REPLICA_NUMBER
+			index := i % MaxDescriptors
 			ipForReplica[index] = append(ipForReplica[index], ip)
 		}
 	}
@@ -204,7 +205,7 @@ func main() {
 
 	// Gather all the IPs
 	all_ips := make([]onionutil.IntroductionPoint,
-		0, len(onions)*MAX_INTROPOINT_NUMBER)
+		0, len(onions)*MaxIntropoints)
 	for _, descriptor := range descriptors {
 		all_ips = append(all_ips, descriptor.IntroductionPoints...)
 	}

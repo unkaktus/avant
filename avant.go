@@ -192,11 +192,12 @@ func main() {
 			for i, onion := range onions {
 				if onion_curr == onion {
 					onions = append(onions[:i], onions[i+1:]...)
+					ips, _ := onionutil.ParseIntroPoints(desc.IntropointsBlock)
 					log.Printf("Got descriptor for %v.onion "+
 						"with %d introduction points. "+
 						"%v descriptors left",
 						onion_curr,
-						len(desc.IntroductionPoints),
+						len(ips),
 						len(onions))
 					descriptors = append(descriptors, desc)
 					break
@@ -206,10 +207,10 @@ func main() {
 	}
 
 	// Gather all the IPs
-	all_ips := make([]onionutil.IntroductionPoint,
-		0, len(onions)*MaxIntropoints)
+	all_ips := make([]onionutil.IntroductionPoint, 0, len(onions)*MaxIntropoints)
 	for _, descriptor := range descriptors {
-		all_ips = append(all_ips, descriptor.IntroductionPoints...)
+		ipsFromDesc, _ := onionutil.ParseIntroPoints(descriptor.IntropointsBlock)
+		all_ips = append(all_ips, ipsFromDesc...)
 	}
 
 	// Pick IPs from the pool
@@ -221,16 +222,27 @@ func main() {
 	log.Printf("Using the following IP distribution: %v", lens)
 
 	for replica, do_publish := range replicas {
-		desc := onionutil.NewOnionDescriptor(perm_pk, picked_ips[replica], replica)
-		signedDesc := desc.Sign(signWith(front_onion))
+		desc := new(onionutil.OnionDescriptor)
+		desc.PermanentKey = perm_pk
+		for _, ip := range picked_ips[replica] {
+			desc.IntropointsBlock = append(desc.IntropointsBlock, ip.Bytes()...)
+		}
+		err := desc.Update(replica)
+		if err != nil {
+			log.Printf("Unable to update descriptor: %v", err)
+			continue
+		}
+		if err := desc.Sign(signWith(front_onion)); err != nil {
+			log.Printf("Unable to sign descriptor")
+			continue
+		}
 
 		if *save_to_files {
-			ioutil.WriteFile(fmt.Sprintf("%v.%v.desc", front_onion, replica),
-				signedDesc, 0600)
+			ioutil.WriteFile(fmt.Sprintf("%v.%v.desc", front_onion, replica), desc.Bytes(), 0600)
 		}
 		if do_publish {
 			log.Printf("Publishing descriptor under replica #%v", replica)
-			resp, _ = c.Request("+HSPOST\n%s.", signedDesc)
+			resp, _ = c.Request("+HSPOST\n%s.", desc.Bytes())
 			if debug {
 				log.Printf("HSPOST response: %v", resp)
 			}

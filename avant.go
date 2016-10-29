@@ -163,7 +163,8 @@ func main() {
 		log.Fatalf("SETEVENTS HS_DESC_CONTENT failed: %v", err)
 	}
 
-	var descriptors []onionutil.OnionDescriptor
+	allIPs := make([]onionutil.IntroductionPoint, 0, len(onions)*MaxIntropoints)
+
 	// XXX: if some onion is broken we're stuck. timeout?
 
 	// Revieve descriptors and parse them
@@ -192,29 +193,22 @@ func main() {
 			for i, onion := range onions {
 				if onion_curr == onion {
 					onions = append(onions[:i], onions[i+1:]...)
-					ips, _ := onionutil.ParseIntroPoints(desc.IntropointsBlock)
+					ipsFromDesc, _ := onionutil.ParseIntroPoints(desc.IntropointsBlock)
+					allIPs = append(allIPs, ipsFromDesc...)
 					log.Printf("Got descriptor for %v.onion "+
 						"with %d introduction points. "+
 						"%v descriptors left",
 						onion_curr,
-						len(ips),
+						len(ipsFromDesc),
 						len(onions))
-					descriptors = append(descriptors, desc)
 					break
 				}
 			}
 		}
 	}
 
-	// Gather all the IPs
-	all_ips := make([]onionutil.IntroductionPoint, 0, len(onions)*MaxIntropoints)
-	for _, descriptor := range descriptors {
-		ipsFromDesc, _ := onionutil.ParseIntroPoints(descriptor.IntropointsBlock)
-		all_ips = append(all_ips, ipsFromDesc...)
-	}
-
 	// Pick IPs from the pool
-	picked_ips := pickIntroPoints(all_ips, *distinct_descs)
+	picked_ips := pickIntroPoints(allIPs, *distinct_descs)
 	lens := make([]int, len(picked_ips))
 	for i, _ := range picked_ips {
 		lens[i] = len(picked_ips[i])

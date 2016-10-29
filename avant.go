@@ -183,12 +183,11 @@ func main() {
 			continue
 		}
 		for _, desc := range descs {
-			permID, err := onionutil.CalcPermanentID(desc.PermanentKey)
+			onion_curr, err := desc.OnionID()
 			if err != nil {
-				log.Printf("Error in calculating permanent id: %v", err)
+				log.Printf("%v", err)
 				continue
 			}
-			onion_curr := onionutil.Base32Encode(permID)
 			/* Is this onion is among the requested by us? */
 			for i, onion := range onions {
 				if onion_curr == onion {

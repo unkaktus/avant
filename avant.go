@@ -21,7 +21,7 @@ import (
 	"github.com/nogoegst/onionutil"
 )
 
-const MaxDescriptors = 6
+const MaxDescriptors = 2
 const MaxIntropointsInDesc = 10
 const MaxIntropoints = MaxIntropointsInDesc * MaxDescriptors
 
@@ -88,7 +88,7 @@ func main() {
 		"Set Tor control address to be used")
 	var control_passwd = flag.String("control-passwd", "",
 		"Set Tor control auth password")
-	var replica_mask = flag.String("replica-mask", "111111",
+	var replica_mask = flag.String("replica-mask", "11",
 		"Select replicas to publish descriptors")
 	var keyfileFlag = flag.String("keyfile", "",
 		"Path to the fronting keyfile")

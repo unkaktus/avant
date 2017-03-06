@@ -8,6 +8,8 @@
 package main
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -21,7 +23,7 @@ import (
 
 const MaxDescriptors = 6
 const MaxIntropointsInDesc = 10
-const MaxIntropoints = MaxIntropointsInDesc*MaxDescriptors
+const MaxIntropoints = MaxIntropointsInDesc * MaxDescriptors
 
 func shuffleIntroPoints(src, dst []onionutil.IntroductionPoint) {
 	perm := badrand.Perm(len(src))
@@ -88,6 +90,8 @@ func main() {
 		"Set Tor control auth password")
 	var replica_mask = flag.String("replica-mask", "111111",
 		"Select replicas to publish descriptors")
+	var keyfileFlag = flag.String("keyfile", "",
+		"Path to the fronting keyfile")
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage of %s:\n", os.Args[0])
 		fmt.Fprintf(os.Stderr, "%s [-flags] frontonion backonion1 [backonion2 [...]]\n",
@@ -97,30 +101,24 @@ func main() {
 	}
 	flag.Parse()
 	debug := *debug_flag
-	var tail = flag.Args()
-	switch {
-	case len(tail) < 1:
-		log.Fatalf("You must specify at least one frontend onion")
-	case len(tail) < 2:
+	onions := flag.Args()
+	if len(onions) < 1 {
 		log.Fatalf("You must specify at least one backend onion")
 	}
 	replicas, err := parseReplicaMask(*replica_mask)
 	if err != nil {
 		log.Fatalf("Wrong replica mask: %v", err)
 	}
-	var front_onion = tail[0]
-	var onions = tail[1:]
 
-	log.Printf("Trying to get public key for the front onion...")
-	perm_pk, err := getPubKeyFor(front_onion)
+	frontSK, frontPK, err := onionutil.LoadPrivateKeyFile(*keyfileFlag)
 	if err != nil {
-		log.Fatalf("Cannot get front onion pubkey: %v", err)
+		log.Fatalf("Unable to load private key: %v", err)
 	}
-	// Check if we've got the right key
-	permid_from_pk, _ := onionutil.CalcPermanentID(perm_pk)
-	if onionutil.Base32Encode(permid_from_pk) != front_onion {
-		log.Fatalf("We've got wrong public key for the front onion")
+	front_onion, err := onionutil.OnionAddress(frontPK)
+	if err != nil {
+		log.Fatal(err)
 	}
+
 	// Connect to a running tor instance.
 	c, err := bulb.DialURL(*control)
 	if err != nil {
@@ -137,13 +135,6 @@ func main() {
 	if err := c.Authenticate(*control_passwd); err != nil {
 		log.Fatalf("Authentication failed: %v", err)
 	}
-
-	// At this point, c.Request() can be used to issue requests.
-	resp, err := c.Request("GETINFO version")
-	if err != nil {
-		log.Fatalf("GETINFO version failed: %v", err)
-	}
-	log.Printf("We're using tor %v", resp.Data[0])
 
 	c.StartAsyncReader()
 
@@ -216,7 +207,7 @@ func main() {
 
 	for replica, do_publish := range replicas {
 		desc := new(onionutil.OnionDescriptor)
-		desc.PermanentKey = perm_pk
+		desc.PermanentKey = frontPK.(*rsa.PublicKey)
 		for _, ip := range picked_ips[replica] {
 			desc.IntropointsBlock = append(desc.IntropointsBlock, ip.Bytes()...)
 		}
@@ -225,7 +216,10 @@ func main() {
 			log.Printf("Unable to update descriptor: %v", err)
 			continue
 		}
-		if err := desc.Sign(signWith(front_onion)); err != nil {
+		err = desc.Sign(func(d []byte) ([]byte, error) {
+			return rsa.SignPKCS1v15(rand.Reader, frontSK.(*rsa.PrivateKey), 0, d)
+		})
+		if err != nil {
 			log.Printf("Unable to sign descriptor")
 			continue
 		}
@@ -235,7 +229,7 @@ func main() {
 		}
 		if do_publish {
 			log.Printf("Publishing descriptor under replica #%v", replica)
-			resp, _ = c.Request("+HSPOST\n%s.", desc.Bytes())
+			resp, _ := c.Request("+HSPOST\n%s.", desc.Bytes())
 			if debug {
 				log.Printf("HSPOST response: %v", resp)
 			}

@@ -8,17 +8,16 @@
 package main
 
 import (
-	"crypto/rand"
 	"crypto/rsa"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
-	badrand "math/rand"
 	"os"
 
 	"github.com/nogoegst/bulb"
 	"github.com/nogoegst/onionutil"
+	"github.com/nogoegst/rand"
 )
 
 const MaxDescriptors = 2
@@ -26,7 +25,7 @@ const MaxIntropointsInDesc = 10
 const MaxIntropoints = MaxIntropointsInDesc * MaxDescriptors
 
 func shuffleIntroPoints(src, dst []onionutil.IntroductionPoint) {
-	perm := badrand.Perm(len(src))
+	perm := rand.Perm(len(src))
 	for index, value := range perm {
 		dst[value] = src[index]
 	}

@@ -1,6 +1,6 @@
 avant
 =====
-OnionBalance in unix way.
+Simple and fast onion balancing.
 
 `avant`
 
@@ -8,28 +8,32 @@ OnionBalance in unix way.
 
  takes all the introduction points from them, then
 
- reassembles these introduction points into new descriptor(s), then
+ reassembles these introduction points into new descriptors, then
 
- signs the descriptor(s) with frontend onion key, then
+ signs the descriptors with frontend onion key, then
 
- publishes it(them) to HSDir.
+ publishes them to HSDir.
 
 So it goes.
 
 Install
 -------
 ```
-$ torsocks go get github.com/nogoegst/avant
+$ go get -u github.com/nogoegst/avant/cmd/...
 ```
 
 Usage
 -----
-Let's say that your private (1024-bit RSA, PEM-formatted) keys
-are stored in `/path/to/keys`.
+Generate a private key:
 ```
-$ export KEYCITYPATH=/path/to/keys
-$ avant frontonion backonion1 backonion2
+ $ openssl genrsa -out key.pem 1024
 ```
+Steal all intropoints from Facebook:
+```
+ $ avant -keyfile=key.pem facebookcorewwwi
+```
+Now your onion service is alive.
+
 
 `avant` is capabale of creating distinct descriptors (`-distinct-descs` flag)
  in order to fit up to 6x10=60 introduction points per onion service.
@@ -40,13 +44,8 @@ $ avant frontonion backonion1 backonion2
 
    `-replica-mask 000000` - upload descriptors only with replica={}, i.e. nothing.
 
-`avant` can save descriptors to files via `-save-to-files` flag.
 
 Remarks
 -------
-`avant` just `avant`s once. If you want to do it regulary, there is
-`cron` for that. Please consult `rend-spec.txt` about the upload intervals.
-
-At the moment `avant` depends on a shitty version of `keycity` and 
-may be inconvenient as hell (with all these env variables etc).
-It's not going to always be like that, so don't blame me for that.
+`avant` avants only once. If you want to do it regulary, there is
+`cron` for that. Consult `rend-spec.txt` about the upload intervals.
